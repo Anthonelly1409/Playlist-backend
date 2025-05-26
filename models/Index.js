@@ -1,49 +1,33 @@
-import sequelize from './../config/database.js';
-import UsuarioModel from './Usuario.js';
-import FilmeModel from './Filme.js';
-import CanalModel from './Canal.js';
-import CanalFilmeModel from './CanalFilme.js';
-import PlaylistModel from './Playlist.js';
-import ComentarioModel from './Comentario.js';
+import sequelize from '../config/database.js';
 
-const Usuario = UsuarioModel(sequelize);
-const Filme = FilmeModel(sequelize);
-const Canal = CanalModel(sequelize);
-const CanalFilme = CanalFilmeModel(sequelize);
-const Playlist = PlaylistModel(sequelize);
-const Comentario = ComentarioModel(sequelize);
+import Canal from './Canal.js';
+import Filme from './Filme.js';
+import Usuario from './Usuario.js';
+import Playlist from './Playlist.js';
+import PlaylistFilme from './PlaylistFilme.js';
+import CanalFilme from './CanalFilme.js';
+import Comentario from './Comentario.js';
+import Mensalidade from './Mensalidade.js';
 
-// RELACIONAMENTOS
-Canal.belongsToMany(Filme, {
-  through: CanalFilme,
-  foreignKey: 'id_canal',
-});
-Filme.belongsToMany(Canal, {
-  through: CanalFilme,
-  foreignKey: 'id_filme',
-});
+// Inicializa os models
+const CanalModel = Canal(sequelize);
+const FilmeModel = Filme(sequelize);
+const UsuarioModel = Usuario(sequelize);
+const PlaylistModel = Playlist(sequelize);
+const PlaylistFilmeModel = PlaylistFilme(sequelize);
+const CanalFilmeModel = CanalFilme(sequelize);
+const ComentarioModel = Comentario(sequelize);
+const MensalidadeModel = Mensalidade(sequelize);
 
-Usuario.hasMany(Playlist, { foreignKey: 'id_usuario' });
-Playlist.belongsTo(Usuario, { foreignKey: 'id_usuario' });
-
-Canal.hasMany(Playlist, { foreignKey: 'id_canal' });
-Playlist.belongsTo(Canal, { foreignKey: 'id_canal' });
-
-Filme.hasMany(Playlist, { foreignKey: 'id_filme' });
-Playlist.belongsTo(Filme, { foreignKey: 'id_filme' });
-
-Usuario.hasMany(Comentario, { foreignKey: 'id_usuario' });
-Comentario.belongsTo(Usuario, { foreignKey: 'id_usuario' });
-
-Filme.hasMany(Comentario, { foreignKey: 'id_filme' });
-Comentario.belongsTo(Filme, { foreignKey: 'id_filme' });
-
+// Exporta os models inicializados
 export {
   sequelize,
-  Usuario,
-  Filme,
-  Canal,
-  CanalFilme,
-  Playlist,
-  Comentario
+  CanalModel as Canal,
+  FilmeModel as Filme,
+  UsuarioModel as Usuario,
+  PlaylistModel as Playlist,
+  PlaylistFilmeModel as PlaylistFilme,
+  CanalFilmeModel as CanalFilme,
+  ComentarioModel as Comentario,
+  MensalidadeModel as Mensalidade,
 };
