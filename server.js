@@ -1,38 +1,37 @@
-// server.js
-import { sequelize, Usuario, Filme, Canal, CanalFilme, Playlist, Comentario } from './models/Index.js';
+// server.js (ou outro nome que você preferir)
+import express from 'express';
+import bodyParser from 'body-parser';
+import sequelize from './config/database.js';
 
-(async () => {
-  try {
-    // Tenta autenticar a conexão com o banco de dados
-    await sequelize.authenticate();
-    console.log('✅ Conexão com o banco de dados estabelecida com sucesso.');
 
-    // Cria ou altera as tabelas conforme os modelos
-    await sequelize.sync({ alter: true });
-    console.log('✅ Tabelas sincronizadas com sucesso.');
+import usuarioRoutes from './routes/UsuariosRouters.js';
+import filmeRoutes from './routes/FilmesRouters.js';
+import canalRoutes from './routes/CanaisRouters.js';
+import summaryRouters from './routes/SummaryRouters.js';
+// import playlistRoutes from './routes/PlaylistsRouters.js';
 
-    // Cria usuário apenas se ainda não existir
-    const [novoUsuario, criado] = await Usuario.findOrCreate({
-      where: { login: 'thiago.oliveira' },
-      defaults: {
-        nome: 'Thiago Oliveira',
-        email: 'thiago.oliveira@ifal.edu.br'
-      }
-    });
+const app = express();
+const port = process.env.PORT || 3000;
 
-    if (criado) {
-      console.log('✅ Novo usuário criado com sucesso.');
-    } else {
-      console.log('ℹ️ Usuário já existia. Nenhum novo registro foi criado.');
-    }
+app.use(bodyParser.json());
 
-    // Lista todos os usuários
-    const usuarios = await Usuario.findAll();
-    console.log(`👥 Total de usuários: ${usuarios.length}`);
-  } catch (error) {
-    console.error('❌ Erro ao conectar ou sincronizar o banco de dados:', error);
-  } finally {
-    // Fecha a conexão com o banco
-    await sequelize.close();
-  }
-})();
+app.get('/version', (req, res) => {
+  res.json({ status: 'ok', version: '1.0.1' });
+});
+
+app.use('/usuarios', usuarioRoutes);
+app.use('/filmes', filmeRoutes);
+app.use('/canais', canalRoutes);
+app.use('/summary', summaryRouters);
+
+
+
+sequelize.sync({ alter: true }).then(() => {
+  console.log('Database ok');
+  app.listen(port, () => {
+    console.log(`Server ok port ${port}`);
+  });
+})
+.catch((error) => {
+  console.error('Erro ao conectar:', error);
+});

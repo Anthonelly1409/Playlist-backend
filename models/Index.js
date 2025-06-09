@@ -19,7 +19,6 @@ const CanalFilmeModel = CanalFilme(sequelize);
 const ComentarioModel = Comentario(sequelize);
 const MensalidadeModel = Mensalidade(sequelize);
 
-// Exporta os models inicializados
 export {
   sequelize,
   CanalModel as Canal,
