@@ -1,58 +1,135 @@
 import express from 'express';
 import { Usuario } from '../models/Index.js';
+import { Op }  from 'sequelize';
 
 const router = express.Router();
 
-// Rota GET - Listar todos os usuários
-router.get('/', async (_req, res) => {
+router.get('/search', async (req, res) => {
+  console.log('search')
+  const { q } = req.query;
+  if (!q) {
+    return res.status(400).json({ error: 'Parâmetro "q" é obrigatório' });
+  }
+
   try {
-    const usuarios = await Usuario.findAll();
+    const usuarios = await Usuario.findAll({
+      where: {
+        [Op.or]: [
+          { nome: { [Op.iLike]: `%${q}%` } },
+          { login: { [Op.iLike]: `%${q}%` } },
+          { email: { [Op.iLike]: `%${q}%` } },
+        ],
+      },
+    });
+
     res.json(usuarios);
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro ao buscar usuários.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error na busca', details: err });
   }
 });
 
-// Rota GET - Buscar usuário por ID
-router.get('/:id', async (req, res) => {
+
+router.get('/buscar-por-email-ou-login', async (req, res) => {
+  const { q } = req.query;
+
+  if (!q) {
+    return res.status(400).json({ error: 'Parâmetro "valor" é obrigatório' });
+  }
+
   try {
-    const { id } = req.params;
-    const usuario = await Usuario.findByPk(id);
+    const usuario = await Usuario.findOne({
+      where: {
+        [Op.or]: [
+          { email: q },
+          { login: q },
+        ],
+      },
+    });
 
     if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+      return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
     res.json(usuario);
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro ao buscar usuário.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro na busca', details: err });
   }
 });
 
-// Rota POST - Criar um novo usuário
-router.post('/', async (_req, res) => {
+router.get('/', async (req, res) => {
+  console.log('get/')
   try {
-    const usuario = await Usuario.create(_req.body);
-    res.status(201).json(usuario);
-  } catch (error) {
-    res.status(400).json({ erro: 'Erro ao criar usuário.' });
+    const usuarios = await Usuario.findAll();
+    res.json(usuarios);
+  } catch (err){
+    console.log(err);
+    return res.status(500).json({ error: 'Erro recuperar usuários', details: err });
   }
 });
 
-// Rota DELETE - Deletar um usuário pelo ID
-router.delete('/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
+  console.log('get/:id');
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     const usuario = await Usuario.findByPk(id);
+    
+    if(usuario)
+      res.json(usuario);
+    else
+      res.status(404).json({error: 'Nenhum usuário encontrado'});
+  } catch (err){
+    return res.status(500).json({ error: 'Erro recuperar usuários', details: err });
+  }
+});
 
-    if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+
+router.post('/', async (req, res) => {
+  try {
+    //const usuario = await Usuario.create(req.body);
+    
+    const usuario = Usuario.build(req.body);
+    await usuario.validate();
+    await usuario.save();
+    
+    res.json(usuario);
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro ao salvar usuário', details: err });
+  }
+    
+});
+
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [updated] = await Usuario.update(req.body, {
+      where: { id },
+    });
+
+    if (updated) {
+      const updatedUser = await Usuario.findByPk(id);
+      return res.json(updatedUser);
     }
 
-    await usuario.destroy();
-    res.json({ mensagem: 'Usuário deletado com sucesso.' });
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro ao deletar usuário.' });
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro ao atualizar usuário', details: err });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deleted = await Usuario.destroy({
+      where: { id },
+    });
+
+    if (deleted) {
+      return res.json({ message: 'Usuário deletado com sucesso' });
+    }
+
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro ao deletar usuário', details: err });
   }
 });
 
